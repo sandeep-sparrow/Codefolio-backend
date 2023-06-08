@@ -27,7 +27,7 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
-                                        Authentication authentication) throws IOException, ServletException {
+                                        Authentication authentication) throws IOException {
         String email = ((OAuth2AuthenticationToken) authentication).getPrincipal().getAttribute("email");
 
         System.out.println("User authenticated with email: " + email);
@@ -44,5 +44,6 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
 
         System.out.println("User session saved: " + userSession.getId());
 
+        response.sendRedirect("http://localhost:5173/dashboard");
     }
 }
