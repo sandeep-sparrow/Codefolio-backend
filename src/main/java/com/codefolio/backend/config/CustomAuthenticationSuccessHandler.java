@@ -4,7 +4,7 @@ import com.codefolio.backend.user.UserRepository;
 import com.codefolio.backend.user.UserSession;
 import com.codefolio.backend.user.UserSessionRepository;
 import com.codefolio.backend.user.Users;
-import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
@@ -41,6 +41,12 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
         UserSession userSession = new UserSession(sessionId, user, new Date());
 
         userSessionRepository.save(userSession);
+
+        Cookie cookie = new Cookie("SESSION_ID", sessionId);
+        cookie.setPath("/");
+        cookie.setSecure(true);
+        cookie.setHttpOnly(true);
+        response.addCookie(cookie);
 
         System.out.println("User session saved: " + userSession.getId());
 
