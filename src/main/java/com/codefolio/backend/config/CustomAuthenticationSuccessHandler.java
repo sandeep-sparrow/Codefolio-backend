@@ -35,7 +35,7 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
             user = userRepository.findByEmail(email).get();
         }else{
             String name = ((OAuth2AuthenticationToken) authentication).getPrincipal().getAttribute("name");
-            user = new Users(email, name);
+            user = new Users(name, email);
             userRepository.save(user);
         }
 

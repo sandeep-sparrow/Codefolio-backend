@@ -1,9 +1,10 @@
 package com.codefolio.backend.user;
 
-import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.security.Principal;
 
 @RestController
 public class UserController {
@@ -15,8 +16,8 @@ public class UserController {
     }
 
     @GetMapping("/user")
-    public ResponseEntity<?> userDetails(HttpServletRequest request){
-        return userService.userDetails(request);
+    public ResponseEntity<?> userDetails(Principal principal){
+        return userService.userDetails(principal);
     }
 
 }
