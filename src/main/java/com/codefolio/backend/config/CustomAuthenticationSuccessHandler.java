@@ -10,6 +10,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
@@ -25,6 +27,8 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
 
     private final UserRepository userRepository;
     private final UserSessionRepository userSessionRepository;
+    private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
@@ -47,7 +51,7 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
             user = userRepository.findByEmail(email).get();
         }else if (authentication instanceof OAuth2AuthenticationToken){
             String randomPassword = UUID.randomUUID().toString();
-            user = new Users(name, email, randomPassword);
+            user = new Users(name, email, passwordEncoder.encode(randomPassword));
             userRepository.save(user);
         }
         else {

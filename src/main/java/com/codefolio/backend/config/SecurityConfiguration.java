@@ -3,6 +3,8 @@ package com.codefolio.backend.config;
 import com.codefolio.backend.user.UserSessionRepository;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -25,22 +27,19 @@ public class SecurityConfiguration {
 
     private final UserSessionRepository userSessionRepository;
     private final CustomAuthenticationSuccessHandler successHandler;
-    private final MyUserDetailsService customUserDetailsService;
-    public SecurityConfiguration(UserSessionRepository userSessionRepository, CustomAuthenticationSuccessHandler successHandler, MyUserDetailsService customUserDetailsService) {
+    public SecurityConfiguration(UserSessionRepository userSessionRepository, CustomAuthenticationSuccessHandler successHandler) {
         this.userSessionRepository = userSessionRepository;
         this.successHandler = successHandler;
-        this.customUserDetailsService = customUserDetailsService;
     }
 
-
-
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
     @Bean
     public SessionIdFilter sessionIdFilter() {
         return new SessionIdFilter(userSessionRepository);
+    }
+
+    @Bean
+    public SessionValidationFilter sessionValidationFilter(){
+        return new SessionValidationFilter(userSessionRepository);
     }
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
@@ -54,9 +53,23 @@ public class SecurityConfiguration {
         return source;
     }
     @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+    @Bean
+    public AuthenticationManager authenticationManager(HttpSecurity http, PasswordEncoder passwordEncoder, MyUserDetailsService userDetailService)
+            throws Exception {
+        return http.getSharedObject(AuthenticationManagerBuilder.class)
+                .userDetailsService(userDetailService)
+                .passwordEncoder(passwordEncoder)
+                .and()
+                .build();
+    }
+
+    @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .addFilterBefore(sessionIdFilter(), UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(sessionIdFilter(), UsernamePasswordAuthenticationFilter.class)
                 .cors(withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeRequests(authorizeRequests -> authorizeRequests

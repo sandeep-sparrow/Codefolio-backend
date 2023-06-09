@@ -26,12 +26,18 @@ public class SessionIdFilter extends OncePerRequestFilter {
     }
 
     @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        return request.getServletPath().equals("/login");
+    }
+
+    @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
         Cookie sessionCookie = (WebUtils.getCookie(request, "SESSION_ID"));
         if (sessionCookie != null) {
             String cookie = sessionCookie.getValue();
+            System.out.println(cookie);
             Optional<UserSession> userSessionOpt = userSessionRepository.findBySessionId(cookie);
             if (userSessionOpt.isPresent()) {
                 UserSession userSession = userSessionOpt.get();
