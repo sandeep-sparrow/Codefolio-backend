@@ -4,6 +4,7 @@ import com.codefolio.backend.user.UserSession;
 import com.codefolio.backend.user.UserSessionRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -27,11 +28,10 @@ public class SessionIdFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
-        String cookie = (WebUtils.getCookie(request, "SESSION_ID")).getValue();
-        if (cookie != null) {
-
+        Cookie sessionCookie = (WebUtils.getCookie(request, "SESSION_ID"));
+        if (sessionCookie != null) {
+            String cookie = sessionCookie.getValue();
             if (userSessionRepository.findBySessionId(cookie).isPresent()) {
-                System.out.println("HI!");
                 UserSession userSession = userSessionRepository.findBySessionId(cookie).get();
                 Authentication authentication = new UsernamePasswordAuthenticationToken(userSession.getUsers(), null, new ArrayList<>());
                 SecurityContextHolder.getContext().setAuthentication(authentication);

@@ -9,7 +9,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
@@ -31,10 +30,14 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
         String email = ((OAuth2AuthenticationToken) authentication).getPrincipal().getAttribute("email");
 
         System.out.println("User authenticated with email: " + email);
-
-        Users user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("Could not find user with email: " + email));
-
+        Users user;
+        if (userRepository.findByEmail(email).isPresent()){
+            user = userRepository.findByEmail(email).get();
+        }else{
+            String name = ((OAuth2AuthenticationToken) authentication).getPrincipal().getAttribute("name");
+            user = new Users(email, name);
+            userRepository.save(user);
+        }
 
         String sessionId = RequestContextHolder.currentRequestAttributes().getSessionId();
 
