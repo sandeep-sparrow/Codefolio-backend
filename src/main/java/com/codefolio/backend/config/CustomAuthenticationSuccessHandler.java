@@ -8,6 +8,7 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
@@ -16,6 +17,7 @@ import org.springframework.web.context.request.RequestContextHolder;
 
 import java.io.IOException;
 import java.util.Date;
+import java.util.UUID;
 
 @Component
 @AllArgsConstructor
@@ -27,16 +29,29 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
                                         Authentication authentication) throws IOException {
-        String email = ((OAuth2AuthenticationToken) authentication).getPrincipal().getAttribute("email");
+        String email;
+        String name;
+        if (authentication instanceof OAuth2AuthenticationToken) {
+            email = ((OAuth2AuthenticationToken) authentication).getPrincipal().getAttribute("email");
+            name = ((OAuth2AuthenticationToken) authentication).getPrincipal().getAttribute("name");
+        } else if (authentication instanceof UsernamePasswordAuthenticationToken) {
+            email = authentication.getName();
+            name = "";
+        } else {
+            throw new IllegalArgumentException("Unexpected type of authentication: " + authentication);
+        }
 
         System.out.println("User authenticated with email: " + email);
         Users user;
         if (userRepository.findByEmail(email).isPresent()){
             user = userRepository.findByEmail(email).get();
-        }else{
-            String name = ((OAuth2AuthenticationToken) authentication).getPrincipal().getAttribute("name");
-            user = new Users(name, email);
+        }else if (authentication instanceof OAuth2AuthenticationToken){
+            String randomPassword = UUID.randomUUID().toString();
+            user = new Users(name, email, randomPassword);
             userRepository.save(user);
+        }
+        else {
+            throw new IllegalArgumentException("User not found");
         }
 
         String sessionId = RequestContextHolder.currentRequestAttributes().getSessionId();
@@ -53,6 +68,8 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
 
         System.out.println("User session saved: " + userSession.getId());
 
-        response.sendRedirect("http://localhost:5173/dashboard");
+        if (authentication instanceof OAuth2AuthenticationToken){
+            response.sendRedirect("http://localhost:5173/dashboard");
+        }
     }
 }
